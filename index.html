@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Portfolio</title>
+
+        <style>
+            :root {
+                --bg: #14161a;
+                --card: #262731;
+                --card2: #14161a;
+                --accent: #3b82f6;
+                --text: #ffffff;
+                --muted: #9ca3af;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: Arial, sans-serif;
+            }
+
+            .container {
+                width: min(1200px, 95%);
+                margin: auto;
+            }
+
+            header {
+                text-align: center;
+                padding: 60px 20px;
+            }
+
+            .avatar {
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 4px solid var(--accent);
+            }
+
+            h1 {
+                margin-top: 15px;
+                font-size: 40px;
+            }
+
+            .subtitle {
+                margin-top: 10px;
+                color: var(--muted);
+            }
+
+            .stats {
+                margin-top: 25px;
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .stat {
+                background: var(--card);
+                padding: 12px 20px;
+                border-radius: 12px;
+            }
+
+            .filters {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin: 20px 0 35px;
+            }
+
+            .filters button {
+                border: none;
+                background: var(--card);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .filters button:hover {
+                background: var(--accent);
+            }
+
+            .projects {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 20px;
+                padding-bottom: 60px;
+            }
+
+            .card {
+                background: var(--card);
+                border-radius: 16px;
+                overflow: hidden;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+            .card img {
+                width: 100%;
+                height: 220px;
+                object-fit: cover;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .tag {
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 20px;
+                background: var(--accent);
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+
+            .content p {
+                margin-top: 8px;
+                color: var(--muted);
+            }
+
+            /* MODAL */
+
+            .modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.92);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                padding: 20px;
+            }
+
+            .modal.active {
+                display: flex;
+            }
+
+            .modal-box {
+                width: min(800px, 92%);
+                max-height: 90vh;
+                background: var(--card);
+
+                border-radius: 20px;
+                overflow-y: auto;
+                margin-right: 10px;
+            }
+
+            /* WebKit (Chrome, Edge, Safari) */
+            .modal-box::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            .modal-box::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, var(--accent), #2563eb);
+                border-radius: 20px;
+                border: 2px solid var(--card); /* создаёт эффект “врезки” */
+            }
+
+            .slider {
+                position: relative;
+            }
+
+            .main-image-container {
+                display: flex;
+                justify-content: center; /* по горизонтали */
+                align-items: flex-start; /* вверх */
+                margin-top: clamp(10px, 2vw, 22px);
+            }
+
+            .main-image {
+                width: 95%;
+                height: 500px;
+                border-radius: 15px;
+                object-fit: cover;
+            }
+
+            .arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 52px;
+                height: 52px;
+                border: none;
+                border-radius: 50%;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+            }
+
+            .arrow-left {
+                left: 30px;
+            }
+
+            .arrow-right {
+                right: 30px;
+            }
+
+            .modal-content {
+                padding: 25px;
+            }
+
+            .modal-content p {
+                margin-top: 10px;
+                color: var(--muted);
+                line-height: 1.6;
+            }
+
+            .info {
+                margin-top: 20px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .info div {
+                background: var(--card2);
+                padding: 10px 15px;
+                border-radius: 10px;
+            }
+
+            .gallery {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+                overflow-x: auto;
+                scroll-behavior: smooth;
+                flex: 1;
+                padding-bottom: 10px;
+            }
+
+            .gallery::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            .gallery::-webkit-scrollbar-thumb {
+                background: var(--accent);
+                border-radius: 10px;
+            }
+
+            .gallery img {
+                width: 120px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 10px;
+                cursor: pointer;
+                flex-shrink: 0;
+                border: 2px solid transparent;
+            }
+
+            .gallery img.active {
+                border-color: var(--accent);
+            }
+
+            .close {
+                position: absolute;
+                top: 15px;
+                right: 25px;
+                font-size: 42px;
+                color: white;
+                cursor: pointer;
+            }
+
+            footer {
+                text-align: center;
+                padding: 40px;
+                color: var(--muted);
+            }
+
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 30px;
+                }
+
+                .main-image {
+                    height: 250px;
+                }
+
+                .gallery img {
+                    width: 90px;
+                    height: 60px;
+                }
+
+                .arrow {
+                    width: 40px;
+                    height: 40px;
+                    font-size: 23px;
+                }
+
+                .arrow-left {
+                    left: 25px;
+                }
+
+                .arrow-right {
+                    right: 25px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .arrow {
+                    width: 34px;
+                    height: 34px;
+                    font-size: 20px;
+                }
+
+                .arrow-left {
+                    left: 15px;
+                }
+
+                .arrow-right {
+                    right: 15px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <img
+                src="https://playerok.fra1.digitaloceanspaces.com/images/1ef99535-5d56-6b40-5856-03996a265eb5.jpg?timestamp=1730576872"
+                class="avatar"
+                alt="Avatar"
+            />
+
+            <h1>Your Name</h1>
+
+            <div class="subtitle">Roblox Developer • Scripts • Games • GUI</div>
+
+            <div class="stats">
+                <div class="stat">25+ Projects</div>
+                <div class="stat">4+ Years</div>
+                <div class="stat">100% Reviews</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="filters">
+                <button onclick="filterCards('all')">All</button>
+                <button onclick="filterCards('scripts')">Scripts</button>
+                <button onclick="filterCards('games')">Games</button>
+                <button onclick="filterCards('gui')">GUI</button>
+            </div>
+
+            <div class="projects">
+                <div
+                    class="card scripts"
+                    onclick="showProject(
+'Universal Script',
+'Продвинутый Roblox Script.',
+'2 дня',
+'$50',
+'LuaU',
+['images/script1.webp','images/script2.webp','images/script3.webp','images/script4.webp']
+)"
+                >
+                    <img src="images/script1.webp" alt="" />
+                    <div class="content">
+                        <span class="tag">SCRIPT</span>
+                        <h3>Universal Script</h3>
+                        <p>Автоматизация процессов.</p>
+                    </div>
+                </div>
+
+                <div
+                    class="card games"
+                    onclick="showProject(
+'Anime Game',
+'Большой игровой проект Roblox.',
+'14 дней',
+'$500',
+'Roblox Studio',
+['images/game1.webp','images/game2.webp','images/game3.webp','images/game4.webp']
+)"
+                >
+                    <img src="images/game1.webp" alt="" />
+                    <div class="content">
+                        <span class="tag">GAME</span>
+                        <h3>Anime Game</h3>
+                        <p>Полноценная игра.</p>
+                    </div>
+                </div>
+
+                <div
+                    class="card gui"
+                    onclick="showProject(
+'GUI',
+'Описание',
+'1 день',
+'$35',
+'Figma',
+[
+'https://picsum.photos/1200/700',
+'https://picsum.photos/1200/700',
+'https://picsum.photos/1200/700',
+'https://picsum.photos/1200/700',
+'https://picsum.photos/1200/700',
+]
+);"
+                >
+                    <img src="https://picsum.photos/id/1061/1200/700" alt="" />
+                    <div class="content">
+                        <span class="tag">GUI</span>
+                        <h3>Modern GUI</h3>
+                        <p>Современный игровой интерфейс.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="modal">
+            <div class="close" onclick="closeModal()">&times;</div>
+
+            <div class="modal-box">
+                <div class="slider">
+                    <div class="main-image-container">
+                        <button class="arrow arrow-left" onclick="prevImage()">❮</button>
+                        <img id="mainImage" class="main-image" alt="" />
+
+                        <button class="arrow arrow-right" onclick="nextImage()">❯</button>
+                    </div>
+                </div>
+
+                <div class="modal-content">
+                    <h2 id="projectTitle"></h2>
+
+                    <p id="projectDesc"></p>
+
+                    <div class="info">
+                        <div id="projectTime"></div>
+                        <div id="projectPrice"></div>
+                        <div id="projectTech"></div>
+                    </div>
+
+                    <div class="gallery" id="gallery"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer>© 2026 Portfolio</footer>
+
+        <script>
+            let currentImages = [];
+            let currentIndex = 0;
+
+            function filterCards(category) {
+                const cards = document.querySelectorAll(".card");
+
+                cards.forEach((card) => {
+                    if (category === "all") {
+                        card.style.display = "block";
+                        return;
+                    }
+
+                    card.style.display = card.classList.contains(category) ? "block" : "none";
+                });
+            }
+
+            function showProject(title, description, time, price, tech, images) {
+                currentImages = images;
+                currentIndex = 0;
+
+                document.getElementById("modal").classList.add("active");
+
+                document.getElementById("projectTitle").textContent = title;
+
+                document.getElementById("projectDesc").textContent = description;
+
+                document.getElementById("projectTime").textContent = "⏱ " + time;
+
+                document.getElementById("projectPrice").textContent = "💰 " + price;
+
+                document.getElementById("projectTech").textContent = "🛠 " + tech;
+
+                updateGallery();
+            }
+
+            function updateGallery() {
+                document.getElementById("mainImage").src = currentImages[currentIndex];
+
+                const gallery = document.getElementById("gallery");
+
+                gallery.innerHTML = "";
+
+                currentImages.forEach((src, index) => {
+                    const img = document.createElement("img");
+
+                    img.src = src;
+
+                    if (index === currentIndex) {
+                        img.classList.add("active");
+                    }
+
+                    img.onclick = () => {
+                        currentIndex = index;
+                        updateGallery();
+                    };
+
+                    gallery.appendChild(img);
+                });
+            }
+
+            function nextImage() {
+                currentIndex++;
+
+                if (currentIndex >= currentImages.length) {
+                    currentIndex = 0;
+                }
+
+                updateGallery();
+            }
+
+            function prevImage() {
+                currentIndex--;
+
+                if (currentIndex < 0) {
+                    currentIndex = currentImages.length - 1;
+                }
+
+                updateGallery();
+            }
+
+            function closeModal() {
+                document.getElementById("modal").classList.remove("active");
+            }
+
+            document.getElementById("modal").addEventListener("click", (e) => {
+                if (e.target.id === "modal") {
+                    closeModal();
+                }
+            });
+        </script>
+    </body>
+</html>
