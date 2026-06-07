@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShaddDado Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header>
+    <img src="images/icon.png" class="avatar" alt="Avatar">
+    <h1>ShaddDado</h1>
+    <div class="subtitle">Roblox Developer • Scripts • Games • GUI</div>
+
+    <div class="stats">
+        <div class="stat">10+ Проектов</div>
+        <div class="stat">5+ лет опыта</div>
+        <div class="stat">дёшево</div>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="filters">
+        <button onclick="filterCards('all')">All</button>
+        <button onclick="filterCards('scripts')">Scripts</button>
+        <button onclick="filterCards('games')">Games</button>
+        <button onclick="filterCards('gui')">GUI</button>
+    </div>
+
+    <div class="projects" id="projects"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+    <div class="close" onclick="closeModal()">&times;</div>
+
+    <div class="modal-box">
+        <div class="modal-box-container">
+
+            <img id="mainImage" class="main-image" alt="">
+
+            <div class="modal-content">
+
+                <h2 id="projectTitle"></h2>
+                <p id="projectDesc"></p>
+
+                <div class="info">
+                    <div id="projectTime"></div>
+                    <div id="projectPrice"></div>
+                </div>
+
+                <div class="gallery" id="gallery"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>© 2026 Portfolio</footer>
+  <script src="script.js"></script>
+
+</body>
+</html>

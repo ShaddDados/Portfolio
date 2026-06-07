@@ -1,0 +1,30 @@
+
+
+[
+  {
+    "category": "scripts",
+    "title": "Universal Script",
+    "description": "Продвинутый Roblox Script.",
+    "shortDescription": "Автоматизация процессов.",
+    "time": "2 месяца",
+    "price": "5,444₽",
+    "tag": "SCRIPT",
+    "preview": "",
+    "images": [
+      ""
+    ]
+  },
+  {
+    "category": "games",
+    "title": "Universal Script",
+    "description": "Продвинутый Roblox Script.",
+    "shortDescription": "Автоматизация процессов.",
+    "time": "2 дня",
+    "price": "5,444₽",
+    "tag": "GAMES",
+    "preview": "",
+    "images": [
+      ""
+    ]
+  }
+]
