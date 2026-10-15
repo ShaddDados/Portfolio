@@ -68,10 +68,20 @@
   color-scheme: dark;
 }
 
+/* Scrollbar: thin, translucent, no arrow buttons, tinted with the accent */
+html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 45%, transparent) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-button { display: none; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 70%, transparent); background-clip: padding-box; }
+
 [hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body { min-height: 100%; }
+/* Quick taps don't zoom the page: double-tap zoom is switched off for everything the user taps */
+html, body, button, input, textarea, label, a, summary { touch-action: manipulation; }
 body {
   margin: 0;
   font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -212,7 +222,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
   background: var(--field); border: 1px solid var(--glass-line);
   border-radius: 18px; padding: 12px 10px 12px 14px; min-width: 0;
 }
-.item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
 .item-word { font-weight: 700; overflow-wrap: anywhere; }
 .item-answer { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
 .item-answer::before { content: "→ "; color: var(--accent); }
@@ -258,10 +268,20 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
 .set-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .set-name { font-weight: 800; overflow-wrap: anywhere; min-width: 0; }
 .set-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.set-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.set-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .set-actions .btn { min-height: 44px; font-size: 14px; padding: 10px 6px; box-shadow: none; }
 .section-gap { display: flex; flex-direction: column; gap: 10px; }
 .area { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+
+/* A word row switched to editing: the two fields stack over the buttons */
+.edit-row { flex-direction: column; align-items: stretch; gap: 10px; }
+
+/* Typeset maths: "1/2" as a stacked fraction, "√2" as a root with an overline */
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.1; margin: 0 0.1em; font-size: 0.9em; }
+.frac > span { padding: 0 0.25em; }
+.frac > .den { border-top: 1.5px solid currentColor; }
+.rad { white-space: nowrap; }
+.radicand { padding: 0 0.05em; }
 
 @media (prefers-reduced-motion: reduce) {
   .orb { filter: none; }
@@ -277,7 +297,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
   <div class="app">
 
     <header class="topbar">
-      <h1 class="title">Карточки</h1>
+      <h1 class="title">Карточки (2rj22)</h1>
       <span class="badge" id="badge">0 слов</span>
     </header>
 
@@ -381,8 +401,8 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
           <label class="btn ghost file-btn">Загрузить файл<input type="file" id="fileInput" accept=".json,application/json,text/plain"></label>
         </div>
         <p class="hint" id="transferHint" role="status"></p>
-        <details>
-          <summary class="muted" style="cursor: pointer">Текст вместо файла</summary>
+        <div>
+          <p class="label" style="margin: 0 0 8px">Текст набора: скопируйте его или вставьте сюда</p>
           <div class="form" style="margin-top: 10px">
             <textarea class="input area" id="transferText" rows="4" placeholder="Вставьте текст набора"></textarea>
             <div class="btn-row">
@@ -390,7 +410,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
               <button class="btn" type="button" id="importBtn">Импорт</button>
             </div>
           </div>
-        </details>
+        </div>
       </div>
     </section>
 
@@ -430,6 +450,59 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
     return many;
   }
   function wordsLabel(n) { return n + " " + plural(n, "слово", "слова", "слов"); }
+
+  // ---------- Maths ----------
+  // Typesets "1/2" as a stacked fraction and "√2" as a root with an overline.
+  // Built with DOM nodes only, so typed text never runs as markup.
+  var TERM = "(?:√\\(?[\\w.]+\\)?|\\([^()]*\\)|[\\w.]+)";
+  var FRAC_RE = new RegExp("(" + TERM + ")\\/(" + TERM + ")", "g");
+
+  function stripParens(s) {
+    return /^\([^()]*\)$/.test(s) ? s.slice(1, -1) : s;
+  }
+
+  function addInline(text, parent) {
+    var re = /√\(?([\w.]+)\)?/g;
+    var last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var rad = document.createElement("span");
+      rad.className = "rad";
+      rad.appendChild(document.createTextNode("√"));
+      var rd = document.createElement("span");
+      rd.className = "radicand";
+      rd.textContent = m[1];
+      rad.appendChild(rd);
+      parent.appendChild(rad);
+      last = re.lastIndex;
+    }
+    if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+  }
+
+  function typeset(text, parent) {
+    FRAC_RE.lastIndex = 0;
+    var last = 0, m;
+    while ((m = FRAC_RE.exec(text))) {
+      if (m.index > last) addInline(text.slice(last, m.index), parent);
+      var frac = document.createElement("span");
+      frac.className = "frac";
+      var num = document.createElement("span");
+      addInline(stripParens(m[1]), num);
+      var den = document.createElement("span");
+      den.className = "den";
+      addInline(stripParens(m[2]), den);
+      frac.appendChild(num);
+      frac.appendChild(den);
+      parent.appendChild(frac);
+      last = FRAC_RE.lastIndex;
+    }
+    if (last < text.length) addInline(text.slice(last), parent);
+  }
+
+  function setMath(el, text) {
+    el.textContent = "";
+    typeset(text, el);
+  }
 
   function shuffle(arr) {
     var a = arr.slice();
@@ -474,6 +547,55 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
   }
 
   // ---------- Words ----------
+  // Turns one row into two fields, so a single word or answer can be changed in place.
+  function startEdit(li, pair) {
+    li.textContent = "";
+    li.className = "item edit-row";
+
+    var wordIn = document.createElement("input");
+    wordIn.className = "input";
+    wordIn.value = pair.q;
+    wordIn.setAttribute("aria-label", "Слово");
+
+    var answerIn = document.createElement("input");
+    answerIn.className = "input";
+    answerIn.value = pair.a;
+    answerIn.setAttribute("aria-label", "Правильный вариант");
+
+    var row = document.createElement("div");
+    row.className = "btn-row";
+
+    var saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "btn";
+    saveBtn.textContent = "Сохранить";
+    saveBtn.addEventListener("click", function () {
+      var q = wordIn.value.trim();
+      var a = answerIn.value.trim();
+      if (!q || !a) {
+        wordIn.focus();
+        return;
+      }
+      pair.q = q;
+      pair.a = a;
+      persistCurrent();
+      renderPairs();
+    });
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn ghost";
+    cancelBtn.textContent = "Отмена";
+    cancelBtn.addEventListener("click", function () { renderPairs(); });
+
+    row.appendChild(saveBtn);
+    row.appendChild(cancelBtn);
+    li.appendChild(wordIn);
+    li.appendChild(answerIn);
+    li.appendChild(row);
+    wordIn.focus();
+  }
+
   function renderPairs() {
     var list = $("pairList");
     list.textContent = "";
@@ -494,7 +616,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
       word.textContent = p.q;
       var answer = document.createElement("span");
       answer.className = "item-answer";
-      answer.textContent = p.a;
+      setMath(answer, p.a);
       text.appendChild(word);
       text.appendChild(answer);
 
@@ -509,6 +631,8 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
         renderPairs();
         refreshCounts();
       });
+
+      text.addEventListener("click", function () { startEdit(li, p); });
 
       li.appendChild(text);
       li.appendChild(del);
@@ -553,7 +677,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
   function renderCard() {
     var p = order[index];
     revealed = false;
-    $("cardWord").textContent = p.q;
+    setMath($("cardWord"), p.q);
     $("answerBox").hidden = true;
     $("answerBox").classList.remove("show");
     $("answerText").textContent = "";
@@ -574,7 +698,7 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
   $("actionBtn").addEventListener("click", function () {
     if (!revealed) {
       revealed = true;
-      $("answerText").textContent = order[index].a;
+      setMath($("answerText"), order[index].a);
       $("answerBox").hidden = false;
       // restart the fade-in animation for this answer
       void $("answerBox").offsetWidth;
@@ -635,6 +759,19 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
     $("transferText").value = text;
     transferHint(message);
     $("transferText").closest("details").open = true;
+  }
+
+  // Copies text to the clipboard. If the viewer blocks it, the text goes into the box for manual copy.
+  function copyText(text, okMessage) {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      offerTextCopy(text, "Скопируйте текст из поля ниже вручную.");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(function () {
+      transferHint(okMessage);
+    }, function () {
+      offerTextCopy(text, "Скопируйте текст из поля ниже вручную.");
+    });
   }
 
   function renderSets() {
@@ -707,6 +844,15 @@ textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, 
 
       actions.appendChild(openBtn);
       actions.appendChild(dlBtn);
+      var copyOneBtn = document.createElement("button");
+      copyOneBtn.type = "button";
+      copyOneBtn.className = "btn ghost";
+      copyOneBtn.textContent = "Копировать текст";
+      copyOneBtn.addEventListener("click", function () {
+        copyText(exportSets(name), "Набор «" + name + "» скопирован. Вставьте его в другом месте.");
+      });
+
+      actions.appendChild(copyOneBtn);
       actions.appendChild(delBtn);
       card.appendChild(head);
       card.appendChild(actions);
