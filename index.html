@@ -1,67 +1,817 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShaddDado Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Рандомайзер карточек</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap">
+<style>
+/* Layout: phone-first. A bottom tab bar switches between three screens (words, practice, sets),
+   each full height with thumb-reachable buttons. From 760px the tab bar moves to the top.
+   Palette: lilac and peach on a pale ground; deep indigo in dark mode. */
+:root {
+  --bg-a: #eef0ff;
+  --bg-b: #fff1f4;
+  --orb-1: #c4b5fd;
+  --orb-2: #fdba74;
+  --orb-3: #7dd3fc;
+  --glass: rgba(255, 255, 255, 0.44);
+  --glass-strong: rgba(255, 255, 255, 0.7);
+  --glass-line: rgba(255, 255, 255, 0.8);
+  --fg: #1e1b3a;
+  --muted: #5b5780;
+  --accent: #6d5efc;
+  --accent-2: #f5807a;
+  --accent-fg: #ffffff;
+  --field: rgba(255, 255, 255, 0.6);
+  --shadow: 0 18px 50px rgba(70, 60, 140, 0.18);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-a: #0d0b22;
+    --bg-b: #1a0f2e;
+    --orb-1: #5b3fd6;
+    --orb-2: #c2410c;
+    --orb-3: #0e7490;
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-strong: rgba(255, 255, 255, 0.14);
+    --glass-line: rgba(255, 255, 255, 0.18);
+    --fg: #f5f3ff;
+    --muted: #a7a3c9;
+    --accent: #8b7cff;
+    --accent-2: #fb923c;
+    --accent-fg: #0d0b22;
+    --field: rgba(255, 255, 255, 0.07);
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-a: #0d0b22;
+  --bg-b: #1a0f2e;
+  --orb-1: #5b3fd6;
+  --orb-2: #c2410c;
+  --orb-3: #0e7490;
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.14);
+  --glass-line: rgba(255, 255, 255, 0.18);
+  --fg: #f5f3ff;
+  --muted: #a7a3c9;
+  --accent: #8b7cff;
+  --accent-2: #fb923c;
+  --accent-fg: #0d0b22;
+  --field: rgba(255, 255, 255, 0.07);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--fg);
+  background: linear-gradient(170deg, var(--bg-a) 0%, var(--bg-b) 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 { width: 70vmax; height: 70vmax; background: var(--orb-1); top: -28vmax; left: -22vmax; }
+.orb-2 { width: 60vmax; height: 60vmax; background: var(--orb-2); bottom: -24vmax; right: -20vmax; }
+.orb-3 { width: 44vmax; height: 44vmax; background: var(--orb-3); top: 36%; left: 50%; opacity: 0.3; }
+
+/* ---------- App shell ---------- */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 0; min-width: 0; }
+.title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; text-wrap: balance; }
+.badge {
+  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  padding: 6px 12px; border-radius: 999px; background: var(--glass-strong);
+  border: 1px solid var(--glass-line); white-space: nowrap; flex-shrink: 0;
+}
+
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--glass-line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  min-width: 0;
+}
+.muted { color: var(--muted); margin: 0; font-size: 14px; }
+.label { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 0 8px; letter-spacing: 0.02em; }
+
+/* ---------- Bottom tab bar (phone) ---------- */
+.tabbar {
+  position: fixed;
+  z-index: 10;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  width: min(420px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 6px;
+  border-radius: 22px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow);
+}
+.tab {
+  font: inherit; font-size: 12px; font-weight: 700;
+  color: var(--muted); background: transparent; border: 0; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 52px; border-radius: 16px; padding: 6px 4px;
+}
+.tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tab[aria-selected="true"] { color: var(--accent-fg); background: var(--accent); }
+.tab:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+
+/* Desktop: the tab bar becomes a top segmented control */
+@media (min-width: 760px) {
+  .app { padding-top: 32px; padding-bottom: 48px; }
+  .tabbar {
+    position: static; transform: none; width: auto; margin: 0 0 4px;
+    display: inline-grid; grid-template-columns: repeat(3, auto); align-self: flex-start;
+  }
+  .tab { flex-direction: row; min-height: 44px; padding: 8px 18px; font-size: 14px; }
+  .tab svg { width: 18px; height: 18px; }
+  .title { font-size: 1.9rem; }
+}
+
+/* ---------- Buttons & fields ---------- */
+.btn {
+  font: inherit; font-weight: 800; font-size: 16px;
+  color: var(--accent-fg); background: var(--accent);
+  border: 0; border-radius: 16px; padding: 15px 20px; min-height: 52px;
+  cursor: pointer; width: 100%;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: transform 0.12s ease, opacity 0.2s;
+  text-align: center;
+}
+.btn:active { transform: scale(0.98); }
+.btn:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+.btn:disabled { opacity: 0.4; box-shadow: none; }
+.btn.ghost { background: var(--field); color: var(--fg); border: 1px solid var(--glass-line); box-shadow: none; }
+.btn.small { width: auto; min-height: 40px; padding: 8px 14px; font-size: 14px; border-radius: 12px; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.file-btn { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.file-btn input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+
+.input {
+  width: 100%; font: inherit; font-size: 16px; /* 16px stops iOS from zooming in on focus */
+  color: var(--fg); background: var(--field);
+  border: 1px solid var(--glass-line); border-radius: 14px;
+  padding: 13px 14px; min-height: 50px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input::placeholder { color: var(--muted); opacity: 0.8; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
+textarea.input { resize: vertical; min-height: 96px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; }
+.form { display: flex; flex-direction: column; gap: 10px; }
+.hint { min-height: 1.3em; margin: 0; font-size: 14px; color: var(--accent-2); }
+
+/* ---------- Words screen ---------- */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--field); border: 1px solid var(--glass-line);
+  border-radius: 18px; padding: 12px 10px 12px 14px; min-width: 0;
+}
+.item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.item-word { font-weight: 700; overflow-wrap: anywhere; }
+.item-answer { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.item-answer::before { content: "→ "; color: var(--accent); }
+.icon-btn {
+  font: inherit; font-size: 22px; line-height: 1;
+  width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+  border: 1px solid var(--glass-line); background: var(--glass-strong); color: var(--fg); cursor: pointer;
+  display: grid; place-items: center;
+}
+.icon-btn:active { transform: scale(0.95); }
+.empty { text-align: center; color: var(--muted); padding: 26px 10px; margin: 0; font-size: 15px; }
+.counter { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- Practice screen ---------- */
+.screen { display: flex; flex-direction: column; gap: 14px; }
+.start-card { text-align: center; padding: 34px 18px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.start-card h2 { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; }
+.progress-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.progress-count { font-weight: 800; font-variant-numeric: tabular-nums; }
+.track { height: 6px; border-radius: 999px; background: var(--field); overflow: hidden; }
+.track-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.35s ease; }
+.card {
+  min-height: 46vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 20px; padding: 24px 16px;
+}
+.card-label { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.card-word {
+  margin: 0; font-size: clamp(2.1rem, 11vw, 3.4rem); font-weight: 800; line-height: 1.08;
+  letter-spacing: -0.02em; text-wrap: balance; overflow-wrap: anywhere; max-width: 100%;
+}
+.answer { width: 100%; min-height: 84px; display: flex; align-items: center; justify-content: center; }
+.answer-inner {
+  width: 100%; padding: 14px 16px; border-radius: 18px;
+  background: var(--glass-strong); border: 1px solid var(--glass-line);
+}
+.answer-inner[hidden] { display: none !important; }
+.answer-inner.show { animation: appear 0.35s ease both; }
+.answer-text { margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--accent); overflow-wrap: anywhere; }
+@keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Sets screen ---------- */
+.set-card { display: flex; flex-direction: column; gap: 12px; }
+.set-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.set-name { font-weight: 800; overflow-wrap: anywhere; min-width: 0; }
+.set-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.set-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.set-actions .btn { min-height: 44px; font-size: 14px; padding: 10px 6px; box-shadow: none; }
+.section-gap { display: flex; flex-direction: column; gap: 10px; }
+.area { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orb { filter: none; }
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+}
+</style>
 </head>
-
 <body>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
 
-<header>
-    <img src="images/Icon.png" class="avatar" alt="Avatar">
-    <h1>Кирилл Лох :)</h1>
-    <div class="subtitle">Roblox Developer • Scripts • Games • GUI</div>
+  <div class="app">
 
-    <div class="stats">
-        <div class="stat">10+ Проектов</div>
-        <div class="stat">5+ лет опыта</div>
-        <div class="stat">дёшево</div>
-    </div>
-</header>
+    <header class="topbar">
+      <h1 class="title">Карточки</h1>
+      <span class="badge" id="badge">0 слов</span>
+    </header>
 
-<div class="container">
+    <nav class="tabbar" role="tablist" aria-label="Разделы">
+      <button class="tab" role="tab" type="button" data-tab="words" aria-selected="true" aria-controls="panel-words">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+        <span>Слова</span>
+      </button>
+      <button class="tab" role="tab" type="button" data-tab="practice" aria-selected="false" aria-controls="panel-practice">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+        <span>Учить</span>
+      </button>
+      <button class="tab" role="tab" type="button" data-tab="sets" aria-selected="false" aria-controls="panel-sets">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v12H3zM3 7l3-3h5l2 3"/></svg>
+        <span>Наборы</span>
+      </button>
+    </nav>
 
-    <div class="filters">
-        <button onclick="filterCards('all')">All</button>
-        <button onclick="filterCards('scripts')">Scripts</button>
-        <button onclick="filterCards('games')">Games</button>
-        <button onclick="filterCards('gui')">GUI</button>
-    </div>
+    <!-- Words -->
+    <section id="panel-words" class="screen" role="tabpanel" aria-labelledby="tab-words">
+      <div class="glass">
+        <form class="form" id="addForm" autocomplete="off">
+          <div>
+            <p class="label" for="wordInput">Слово</p>
+            <input class="input" id="wordInput" placeholder="например: apple" required>
+          </div>
+          <div>
+            <p class="label" for="answerInput">Правильный вариант</p>
+            <input class="input" id="answerInput" placeholder="например: яблоко" required>
+          </div>
+          <p class="hint" id="formHint" role="status"></p>
+          <button class="btn" type="submit">Добавить слово</button>
+        </form>
+      </div>
 
-    <div class="projects" id="projects"></div>
-
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-    <div class="close" onclick="closeModal()">&times;</div>
-
-    <div class="modal-box">
-        <div class="modal-box-container">
-
-            <img id="mainImage" class="main-image" alt="">
-
-            <div class="modal-content">
-
-                <h2 id="projectTitle"></h2>
-                <p id="projectDesc"></p>
-
-                <div class="info">
-                    <div id="projectTime"></div>
-                    <div id="projectPrice"></div>
-                </div>
-
-                <div class="gallery" id="gallery"></div>
-
-            </div>
+      <div class="glass">
+        <div class="progress-row" style="margin-bottom: 12px">
+          <span class="label" style="margin: 0">Список</span>
+          <button class="btn ghost small" type="button" id="clearBtn">Очистить</button>
         </div>
-    </div>
-</div>
+        <ul class="list" id="pairList"></ul>
+      </div>
+    </section>
 
-<footer>© 2026 Portfolio</footer>
-  <script src="script.js"></script>
+    <!-- Practice -->
+    <section id="panel-practice" class="screen" role="tabpanel" aria-labelledby="tab-practice" hidden>
+      <div class="glass start-card" id="startView">
+        <h2>Готовы проверить себя?</h2>
+        <p class="muted" id="startCount">Добавьте слова, чтобы начать.</p>
+        <button class="btn" type="button" id="startBtn" disabled>Начать</button>
+      </div>
 
+      <div class="glass" id="quizView" hidden>
+        <div class="progress-row">
+          <span class="progress-count" id="progressCount">1 / 1</span>
+          <button class="btn ghost small" type="button" id="exitBtn">Выйти</button>
+        </div>
+        <div class="track" style="margin: 12px 0 4px"><div class="track-fill" id="trackFill"></div></div>
+
+        <div class="card">
+          <span class="card-label">Слово</span>
+          <p class="card-word" id="cardWord"></p>
+          <div class="answer">
+            <div class="answer-inner" id="answerBox" hidden>
+              <p class="answer-text" id="answerText"></p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" type="button" id="actionBtn">Посмотреть ответ</button>
+      </div>
+
+      <div class="glass start-card" id="doneView" hidden>
+        <span class="label" style="margin: 0">Набор пройден</span>
+        <h2 id="doneText">Все слова повторены</h2>
+        <div class="btn-row" style="width: 100%">
+          <button class="btn" type="button" id="restartBtn">Заново</button>
+          <button class="btn ghost" type="button" id="backBtn">К словам</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sets -->
+    <section id="panel-sets" class="screen" role="tabpanel" aria-labelledby="tab-sets" hidden>
+      <div class="glass">
+        <p class="label">Сохранить текущий список</p>
+        <form class="form" id="setForm" autocomplete="off">
+          <input class="input" id="setName" placeholder="Название набора">
+          <button class="btn" type="submit">Сохранить набор</button>
+          <p class="hint" id="setHint" role="status"></p>
+        </form>
+      </div>
+
+      <div class="section-gap" id="setList"></div>
+
+      <div class="glass section-gap">
+        <p class="label" style="margin: 0">Файлы наборов</p>
+        <p class="muted">Скачайте наборы файлом .json или загрузите его обратно.</p>
+        <div class="btn-row">
+          <button class="btn" type="button" id="downloadAllBtn">Скачать все</button>
+          <label class="btn ghost file-btn">Загрузить файл<input type="file" id="fileInput" accept=".json,application/json,text/plain"></label>
+        </div>
+        <p class="hint" id="transferHint" role="status"></p>
+        <details>
+          <summary class="muted" style="cursor: pointer">Текст вместо файла</summary>
+          <div class="form" style="margin-top: 10px">
+            <textarea class="input area" id="transferText" rows="4" placeholder="Вставьте текст набора"></textarea>
+            <div class="btn-row">
+              <button class="btn ghost" type="button" id="copyBtn">Копировать</button>
+              <button class="btn" type="button" id="importBtn">Импорт</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Same storage keys as before, so saved words and sets carry over.
+  var KEY_CURRENT = "randomizer.current.v1";
+  var KEY_SETS = "randomizer.sets.v1";
+
+  function $(id) { return document.getElementById(id); }
+
+  function load(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage is optional */ }
+  }
+
+  function sanitize(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (p) {
+      return p && typeof p.q === "string" && typeof p.a === "string";
+    }).map(function (p) {
+      return { id: String(p.id || Date.now() + Math.random()), q: p.q, a: p.a };
+    });
+  }
+
+  function plural(n, one, few, many) {
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+  function wordsLabel(n) { return n + " " + plural(n, "слово", "слова", "слов"); }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  var pairs = sanitize(load(KEY_CURRENT, []));
+  var sets = load(KEY_SETS, {});
+  var order = [];
+  var index = 0;
+  var revealed = false;
+
+  function persistCurrent() { save(KEY_CURRENT, pairs); }
+  function persistSets() { save(KEY_SETS, sets); }
+
+  // ---------- Tabs ----------
+  var tabs = document.querySelectorAll(".tab");
+  function showTab(name) {
+    tabs.forEach(function (t) {
+      var on = t.getAttribute("data-tab") === name;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    ["words", "practice", "sets"].forEach(function (n) {
+      $("panel-" + n).hidden = n !== name;
+    });
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () { showTab(t.getAttribute("data-tab")); });
+  });
+
+  function refreshCounts() {
+    $("badge").textContent = wordsLabel(pairs.length);
+    $("startBtn").disabled = pairs.length === 0;
+    $("startCount").textContent = pairs.length
+      ? "В наборе " + wordsLabel(pairs.length) + ". Слова идут в случайном порядке."
+      : "Добавьте слова на первом экране, чтобы начать.";
+  }
+
+  // ---------- Words ----------
+  function renderPairs() {
+    var list = $("pairList");
+    list.textContent = "";
+    if (!pairs.length) {
+      var empty = document.createElement("li");
+      empty.className = "empty";
+      empty.textContent = "Пока пусто. Добавьте первую пару сверху.";
+      list.appendChild(empty);
+    }
+    pairs.forEach(function (p) {
+      var li = document.createElement("li");
+      li.className = "item";
+
+      var text = document.createElement("div");
+      text.className = "item-text";
+      var word = document.createElement("span");
+      word.className = "item-word";
+      word.textContent = p.q;
+      var answer = document.createElement("span");
+      answer.className = "item-answer";
+      answer.textContent = p.a;
+      text.appendChild(word);
+      text.appendChild(answer);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "icon-btn";
+      del.setAttribute("aria-label", "Удалить «" + p.q + "»");
+      del.textContent = "×";
+      del.addEventListener("click", function () {
+        pairs = pairs.filter(function (x) { return x.id !== p.id; });
+        persistCurrent();
+        renderPairs();
+        refreshCounts();
+      });
+
+      li.appendChild(text);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+    refreshCounts();
+  }
+
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var wordEl = $("wordInput");
+    var answerEl = $("answerInput");
+    var q = wordEl.value.trim();
+    var a = answerEl.value.trim();
+    if (!q || !a) {
+      $("formHint").textContent = !q ? "Введите слово." : "Введите правильный вариант.";
+      (!q ? wordEl : answerEl).focus();
+      return;
+    }
+    $("formHint").textContent = "";
+    pairs.push({ id: String(Date.now() + Math.random()), q: q, a: a });
+    persistCurrent();
+    renderPairs();
+    wordEl.value = "";
+    answerEl.value = "";
+    wordEl.focus();
+  });
+
+  $("clearBtn").addEventListener("click", function () {
+    pairs = [];
+    persistCurrent();
+    renderPairs();
+  });
+
+  // ---------- Practice ----------
+  function showQuizPart(part) {
+    $("startView").hidden = part !== "start";
+    $("quizView").hidden = part !== "quiz";
+    $("doneView").hidden = part !== "done";
+  }
+
+  function renderCard() {
+    var p = order[index];
+    revealed = false;
+    $("cardWord").textContent = p.q;
+    $("answerBox").hidden = true;
+    $("answerBox").classList.remove("show");
+    $("answerText").textContent = "";
+    $("actionBtn").textContent = "Посмотреть ответ";
+    $("progressCount").textContent = (index + 1) + " / " + order.length;
+    $("trackFill").style.width = (index / order.length * 100) + "%";
+  }
+
+  function startQuiz() {
+    if (!pairs.length) return;
+    order = shuffle(pairs);
+    index = 0;
+    showTab("practice");
+    showQuizPart("quiz");
+    renderCard();
+  }
+
+  $("actionBtn").addEventListener("click", function () {
+    if (!revealed) {
+      revealed = true;
+      $("answerText").textContent = order[index].a;
+      $("answerBox").hidden = false;
+      // restart the fade-in animation for this answer
+      void $("answerBox").offsetWidth;
+      $("answerBox").classList.add("show");
+      $("actionBtn").textContent = "Далее";
+      return;
+    }
+    index++;
+    if (index >= order.length) {
+      $("trackFill").style.width = "100%";
+      $("doneText").textContent = "Повторено " + wordsLabel(order.length);
+      showQuizPart("done");
+      return;
+    }
+    renderCard();
+  });
+
+  $("startBtn").addEventListener("click", startQuiz);
+  $("restartBtn").addEventListener("click", startQuiz);
+  $("exitBtn").addEventListener("click", function () { showQuizPart("start"); });
+  $("backBtn").addEventListener("click", function () { showTab("words"); showQuizPart("start"); });
+
+  // ---------- Sets ----------
+  function setHint(text) { $("setHint").textContent = text; }
+  function transferHint(text) { $("transferHint").textContent = text; }
+
+  function fileNameFor(name) {
+    return String(name).replace(/[\\\/:*?"<>|]+/g, "_").trim() || "набор";
+  }
+
+  // Saves a text file. Returns false if the browser refused to start the download.
+  function downloadText(text, filename) {
+    try {
+      var blob = new Blob([text], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function exportSets(onlyName) {
+    var chosen = {};
+    if (onlyName) chosen[onlyName] = sets[onlyName];
+    else chosen = sets;
+    return JSON.stringify({ format: "randomizer-sets", version: 1, sets: chosen }, null, 2);
+  }
+
+  // Shown when a file download is refused: the text goes into the box for copying by hand.
+  function offerTextCopy(text, message) {
+    $("transferText").value = text;
+    transferHint(message);
+    $("transferText").closest("details").open = true;
+  }
+
+  function renderSets() {
+    var list = $("setList");
+    list.textContent = "";
+    var names = Object.keys(sets);
+
+    if (!names.length) {
+      var empty = document.createElement("div");
+      empty.className = "glass";
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "Сохранённых наборов пока нет.";
+      empty.appendChild(p);
+      list.appendChild(empty);
+      return;
+    }
+
+    names.forEach(function (name) {
+      var card = document.createElement("div");
+      card.className = "glass set-card";
+
+      var head = document.createElement("div");
+      head.className = "set-head";
+      var title = document.createElement("span");
+      title.className = "set-name";
+      title.textContent = name;
+      var count = document.createElement("span");
+      count.className = "set-count";
+      count.textContent = wordsLabel(sets[name].length);
+      head.appendChild(title);
+      head.appendChild(count);
+
+      var actions = document.createElement("div");
+      actions.className = "set-actions";
+
+      var openBtn = document.createElement("button");
+      openBtn.type = "button";
+      openBtn.className = "btn";
+      openBtn.textContent = "Открыть";
+      openBtn.addEventListener("click", function () {
+        pairs = sanitize(sets[name]);
+        persistCurrent();
+        renderPairs();
+        showTab("words");
+      });
+
+      var dlBtn = document.createElement("button");
+      dlBtn.type = "button";
+      dlBtn.className = "btn ghost";
+      dlBtn.textContent = "Скачать";
+      dlBtn.addEventListener("click", function () {
+        var text = exportSets(name);
+        if (!downloadText(text, fileNameFor(name) + ".json")) {
+          offerTextCopy(text, "Файл не получилось сохранить. Текст набора открыт ниже, скопируйте его.");
+        } else {
+          transferHint("Файл «" + fileNameFor(name) + ".json» отправлен на сохранение.");
+        }
+      });
+
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "btn ghost";
+      delBtn.textContent = "Удалить";
+      delBtn.addEventListener("click", function () {
+        delete sets[name];
+        persistSets();
+        renderSets();
+      });
+
+      actions.appendChild(openBtn);
+      actions.appendChild(dlBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(head);
+      card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+
+  $("setForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!pairs.length) {
+      setHint("Сначала добавьте слова на первом экране.");
+      return;
+    }
+    var nameEl = $("setName");
+    var name = nameEl.value.trim() || ("Набор " + (Object.keys(sets).length + 1));
+    sets[name] = pairs.map(function (p) { return { id: p.id, q: p.q, a: p.a }; });
+    persistSets();
+    renderSets();
+    setHint("Набор «" + name + "» сохранён.");
+    nameEl.value = "";
+  });
+
+  $("downloadAllBtn").addEventListener("click", function () {
+    if (!Object.keys(sets).length) {
+      transferHint("Сначала сохраните хотя бы один набор.");
+      return;
+    }
+    var text = exportSets();
+    if (!downloadText(text, "randomizer-sets.json")) {
+      offerTextCopy(text, "Файл не получилось сохранить. Текст всех наборов открыт ниже, скопируйте его.");
+    } else {
+      transferHint("Файл «randomizer-sets.json» отправлен на сохранение.");
+    }
+  });
+
+  function importText(text) {
+    var data;
+    try { data = JSON.parse(text); }
+    catch (e) { transferHint("Не получилось прочитать текст. Проверьте, что он скопирован целиком."); return; }
+
+    var added = 0;
+    if (Array.isArray(data)) {
+      var clean = sanitize(data);
+      if (clean.length) {
+        sets["Импорт " + (Object.keys(sets).length + 1)] = clean;
+        added = 1;
+      }
+    } else if (data && data.sets && typeof data.sets === "object") {
+      Object.keys(data.sets).forEach(function (name) {
+        var clean = sanitize(data.sets[name]);
+        if (clean.length) { sets[name] = clean; added++; }
+      });
+    }
+    if (!added) {
+      transferHint("В тексте не нашлось наборов со словами.");
+      return;
+    }
+    persistSets();
+    renderSets();
+    transferHint("Добавлено наборов: " + added + ".");
+  }
+
+  $("fileInput").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { importText(String(reader.result || "")); };
+    reader.onerror = function () { transferHint("Файл не открылся."); };
+    reader.readAsText(file);
+  });
+
+  $("copyBtn").addEventListener("click", function () {
+    if (!Object.keys(sets).length) {
+      transferHint("Сначала сохраните хотя бы один набор.");
+      return;
+    }
+    var text = exportSets();
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      offerTextCopy(text, "Скопируйте текст из поля вручную.");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(function () {
+      transferHint("Наборы скопированы.");
+    }, function () {
+      offerTextCopy(text, "Скопируйте текст из поля вручную.");
+    });
+  });
+
+  $("importBtn").addEventListener("click", function () {
+    var text = $("transferText").value.trim();
+    if (!text) {
+      transferHint("Вставьте текст набора.");
+      return;
+    }
+    importText(text);
+  });
+
+  // ---------- Init ----------
+  renderPairs();
+  renderSets();
+  showQuizPart("start");
+})();
+</script>
 </body>
 </html>
+
+</body></html>
